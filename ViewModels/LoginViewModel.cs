@@ -36,15 +36,16 @@ namespace SpringOnion.ViewModels
 
         private async Task LoginAsync()
         {
-            var success = await _authService.LoginAsync(UserId, Password);
+            var (success, message) = await _authService.LoginAsync(UserId, Password);
+
             if (success)
             {
-                await App.Current.MainPage.DisplayAlert("Success", "Login successful", "OK");
+                await App.Current.MainPage.DisplayAlert("Success", message, "OK");
                 await Shell.Current.GoToAsync("//MainPage");
             }
             else
             {
-                await App.Current.MainPage.DisplayAlert("Error", "Invalid credentials", "OK");
+                await App.Current.MainPage.DisplayAlert("Error", message, "OK");
             }
         }
     }

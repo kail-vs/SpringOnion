@@ -36,15 +36,16 @@ namespace SpringOnion.ViewModels
 
         private async Task RegisterAsync()
         {
-            var success = await _authService.RegisterAsync(UserId, Password);
+            var (success, message) = await _authService.RegisterAsync(UserId, Password);
+
             if (success)
             {
-                await App.Current.MainPage.DisplayAlert("Success", "User registered successfully", "OK");
+                await App.Current.MainPage.DisplayAlert("Success", message, "OK");
                 await Shell.Current.GoToAsync("//LoginPage");
             }
             else
             {
-                await App.Current.MainPage.DisplayAlert("Error", "Registration failed", "OK");
+                await App.Current.MainPage.DisplayAlert("Error", message, "OK");
             }
         }
     }

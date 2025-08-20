@@ -1,36 +1,54 @@
-﻿using System.Net.Http.Json;
+﻿using System.Net.Http;
+using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace SpringOnion.Services
 {
     public class AuthenticationService
     {
         private readonly HttpClient _httpClient;
-        private readonly string _baseUrl = "https://<your-func-app-name>.azurewebsites.net/api";
-        // replace with your actual Function App URL
+        private readonly string _baseUrl = Environment.GetEnvironmentVariable("AuthApiBaseUrl")
+                       ?? "http://localhost:7143/api";
 
         public AuthenticationService()
         {
             _httpClient = new HttpClient();
         }
 
-        public async Task<bool> RegisterAsync(string userId, string password)
+        public async Task<(bool Success, string Message)> RegisterAsync(string userId, string password)
         {
             var payload = new { userId, password };
-            var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+            var response = await _httpClient.PostAsJsonAsync($"{_baseUrl}/register", payload);
 
-            var response = await _httpClient.PostAsync($"{_baseUrl}/register", content);
-            return response.IsSuccessStatusCode;
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<ApiResponse>();
+                return (result?.Success ?? false, result?.Message ?? "Unknown error");
+            }
+
+            return (false, "Server error");
         }
 
-        public async Task<bool> LoginAsync(string userId, string password)
+        public async Task<(bool Success, string Message)> LoginAsync(string userId, string password)
         {
             var payload = new { userId, password };
-            var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+            var response = await _httpClient.PostAsJsonAsync($"{_baseUrl}/login", payload);
 
-            var response = await _httpClient.PostAsync($"{_baseUrl}/login", content);
-            return response.IsSuccessStatusCode;
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<ApiResponse>();
+                return (result?.Success ?? false, result?.Message ?? "Unknown error");
+            }
+
+            return (false, "Server error");
+        }
+
+        private class ApiResponse
+        {
+            public bool Success { get; set; }
+            public string Message { get; set; } = string.Empty;
         }
     }
 }
