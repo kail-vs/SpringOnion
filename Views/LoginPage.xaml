@@ -3,17 +3,32 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="SpringOnion.Views.LoginPage"
              Title="Login">
-    <VerticalStackLayout Padding="20" Spacing="15">
+    <VerticalStackLayout Spacing="10" Padding="20">
 
+        <!-- UserId -->
         <Entry Placeholder="User ID"
-               Text="{Binding UserId}" />
+           Text="{Binding UserId}" />
 
+        <!-- Password -->
         <Entry Placeholder="Password"
-               IsPassword="True"
-               Text="{Binding Password}" />
+           IsPassword="True"
+           Text="{Binding Password}" />
 
+        <!-- Login Button -->
         <Button Text="Login"
-                Command="{Binding LoginCommand}" />
+            Command="{Binding LoginCommand}" 
+            IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}" />
+
+        <!-- Register Link -->
+        <Button Text="Register"
+            Command="{Binding GoToRegisterCommand}"
+            BackgroundColor="Transparent"
+            TextColor="Blue" />
+
+        <ActivityIndicator IsRunning="{Binding IsBusy}"
+                           IsVisible="{Binding IsBusy}"
+                           Color="Blue"
+                           HorizontalOptions="Center" />
 
     </VerticalStackLayout>
 </ContentPage>

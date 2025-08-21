@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using System.Windows.Input;
 using SpringOnion.Services;
 
@@ -26,6 +22,13 @@ namespace SpringOnion.ViewModels
             set => SetProperty(ref _password, value);
         }
 
+        private bool _isBusy;
+        public bool IsBusy
+        {
+            get => _isBusy;
+            set => SetProperty(ref _isBusy, value);
+        }
+
         public ICommand RegisterCommand { get; }
 
         public RegisterViewModel(AuthenticationService authService)
@@ -36,16 +39,26 @@ namespace SpringOnion.ViewModels
 
         private async Task RegisterAsync()
         {
-            var (success, message) = await _authService.RegisterAsync(UserId, Password);
+            if (IsBusy) return;
 
-            if (success)
+            IsBusy = true;
+            try
             {
-                await App.Current.MainPage.DisplayAlert("Success", message, "OK");
-                await Shell.Current.GoToAsync("//LoginPage");
+                var (success, message) = await _authService.RegisterAsync(UserId, Password);
+
+                if (success)
+                {
+                    await App.Current.MainPage.DisplayAlert("Success", message, "OK");
+                    await Shell.Current.GoToAsync("//LoginPage");
+                }
+                else
+                {
+                    await App.Current.MainPage.DisplayAlert("Error", message, "OK");
+                }
             }
-            else
+            finally
             {
-                await App.Current.MainPage.DisplayAlert("Error", message, "OK");
+                IsBusy = false;
             }
         }
     }

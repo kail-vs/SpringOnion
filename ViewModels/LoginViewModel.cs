@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using System.Windows.Input;
 using SpringOnion.Services;
 
@@ -26,27 +22,53 @@ namespace SpringOnion.ViewModels
             set => SetProperty(ref _password, value);
         }
 
+        private bool _isBusy;
+        public bool IsBusy
+        {
+            get => _isBusy;
+            set => SetProperty(ref _isBusy, value);
+        }
+
         public ICommand LoginCommand { get; }
+        public ICommand GoToRegisterCommand { get; }
 
         public LoginViewModel(AuthenticationService authService)
         {
             _authService = authService;
-            LoginCommand = new Command(async () => await LoginAsync());
+            LoginCommand = new Command(async () => await LoginAsync(), () => !IsBusy);
+            GoToRegisterCommand = new Command(async () => await GoToRegisterAsync());
         }
+
+
 
         private async Task LoginAsync()
         {
-            var (success, message) = await _authService.LoginAsync(UserId, Password);
+            if (IsBusy) return;
 
-            if (success)
+            IsBusy = true;
+            try
             {
-                await App.Current.MainPage.DisplayAlert("Success", message, "OK");
-                await Shell.Current.GoToAsync("//MainPage");
+                var (success, message) = await _authService.LoginAsync(UserId, Password);
+
+                if (success)
+                {
+                    await App.Current.MainPage.DisplayAlert("Success", message, "OK");
+                    await Shell.Current.GoToAsync("MainPage");
+                }
+                else
+                {
+                    await App.Current.MainPage.DisplayAlert("Error", message, "OK");
+                }
             }
-            else
+            finally
             {
-                await App.Current.MainPage.DisplayAlert("Error", message, "OK");
+                IsBusy = false;
             }
+        }
+
+        private async Task GoToRegisterAsync()
+        {
+            await Shell.Current.GoToAsync("RegisterPage");
         }
     }
 }
