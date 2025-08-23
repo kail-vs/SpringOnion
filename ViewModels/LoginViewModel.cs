@@ -1,6 +1,8 @@
 ﻿using System.Threading.Tasks;
 using System.Windows.Input;
 using SpringOnion.Services;
+using CommunityToolkit.Maui.Alerts;
+using CommunityToolkit.Maui.Core;
 
 namespace SpringOnion.ViewModels
 {
@@ -52,12 +54,16 @@ namespace SpringOnion.ViewModels
 
                 if (success)
                 {
-                    await App.Current.MainPage.DisplayAlert("Success", message, "OK");
-                    await Shell.Current.GoToAsync("MainPage");
+                    var toast = Toast.Make("Logged In", ToastDuration.Short, 12);
+                    toast.Show();
+                    //await App.Current.MainPage.DisplayAlert("Success", message, "OK");
+                    Application.Current.MainPage = new AppShellLayer();
                 }
                 else
                 {
-                    await App.Current.MainPage.DisplayAlert("Error", message, "OK");
+                    var toast = Toast.Make("Error", ToastDuration.Short, 12);
+                    toast.Show();
+                    //await App.Current.MainPage.DisplayAlert("Error", message, "OK");
                 }
             }
             finally

@@ -1,8 +1,10 @@
-﻿using System.Net.Http;
-using System.Net.Http.Json;
-using System.Threading.Tasks;
+﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Maui.Storage;
-using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace SpringOnion.Services
 {
@@ -24,14 +26,27 @@ namespace SpringOnion.Services
                        ?? throw new InvalidOperationException("AuthApiBaseUrl not configured.");
         }
 
+        private static StringContent WriteJsonContent(object payload)
+        {
+            var json = JsonConvert.SerializeObject(payload);
+            return new StringContent(json, Encoding.UTF8, "application/json");
+        }
+
+        private static async Task<T?> ReadJsonAsync<T>(HttpResponseMessage response)
+        {
+            var json = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<T>(json);
+        }
+
         public async Task<(bool Success, string Message)> RegisterAsync(string userId, string password)
         {
-            var payload = new { userId, password };
-            var response = await _httpClient.PostAsJsonAsync($"{BaseUrl}/register", payload);
+            var content = WriteJsonContent(new { userId, password });
+
+            var response = await _httpClient.PostAsync($"{BaseUrl}/api/register", content);
 
             if (response.IsSuccessStatusCode)
             {
-                var result = await response.Content.ReadFromJsonAsync<ApiResponse>();
+                var result = await ReadJsonAsync<ApiResponse>(response);
                 return (result?.Success ?? false, result?.Message ?? "Unknown error");
             }
 
@@ -40,12 +55,13 @@ namespace SpringOnion.Services
 
         public async Task<(bool Success, string Message)> LoginAsync(string userId, string password)
         {
-            var payload = new { userId, password };
-            var response = await _httpClient.PostAsJsonAsync($"{BaseUrl}/login", payload);
+            var content = WriteJsonContent(new { userId, password });
+
+            var response = await _httpClient.PostAsync($"{BaseUrl}/api/login", content);
 
             if (response.IsSuccessStatusCode)
             {
-                var result = await response.Content.ReadFromJsonAsync<LoginResponse>();
+                var result = await ReadJsonAsync<LoginResponse>(response);
 
                 if (result != null && result.Success && !string.IsNullOrEmpty(result.Token))
                 {
@@ -72,14 +88,14 @@ namespace SpringOnion.Services
                 return (false, "No token available");
 
             _httpClient.DefaultRequestHeaders.Authorization =
-                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Token);
+                new AuthenticationHeaderValue("Bearer", Token);
 
-            var response = await _httpClient.GetAsync($"{BaseUrl}/profile");
+            var response = await _httpClient.GetAsync($"{BaseUrl}/api/profile");
 
             if (response.IsSuccessStatusCode)
             {
-                var result = await response.Content.ReadFromJsonAsync<ApiResponse>();
-                return (result?.Success ?? false, result?.Message);
+                var result = await ReadJsonAsync<ApiResponseWithProfile>(response);
+                return (result?.Success ?? false, result?.Data?.UserId ?? "Unknown error");
             }
 
             return (false, "Failed to fetch profile");
@@ -89,6 +105,17 @@ namespace SpringOnion.Services
         {
             public bool Success { get; set; }
             public string Message { get; set; } = string.Empty;
+        }
+
+        private class ApiResponseWithProfile : ApiResponse
+        {
+            public ProfileData? Data { get; set; }
+        }
+
+        private class ProfileData
+        {
+            public string UserId { get; set; } = string.Empty;
+            public string Email { get; set; } = string.Empty;
         }
 
         private class LoginResponse : ApiResponse

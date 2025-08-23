@@ -3,7 +3,8 @@ using Microsoft.Extensions.Configuration;
 using SpringOnion.ViewModels;
 using SpringOnion.Services;
 using SpringOnion.Views;
-using System.Text.Json;
+using Newtonsoft.Json;
+using CommunityToolkit.Maui;
 
 namespace SpringOnion
 {
@@ -13,11 +14,11 @@ namespace SpringOnion
         {
             var builder = MauiApp.CreateBuilder();
 
-            using var stream = FileSystem.OpenAppPackageFileAsync("appsettings.json").Result;
+            using var stream = FileSystem.OpenAppPackageFileAsync("appsettings.json").GetAwaiter().GetResult();
             using var reader = new StreamReader(stream);
             var json = reader.ReadToEnd();
 
-            var configData = JsonSerializer.Deserialize<Dictionary<string, string>>(json);
+            var configData = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
             builder.Configuration.AddInMemoryCollection(configData!);
 
             builder
@@ -37,6 +38,10 @@ namespace SpringOnion
             builder.Services.AddTransient<RegisterViewModel>();
             builder.Services.AddTransient<LoginPage>();
             builder.Services.AddTransient<RegisterPage>();
+            builder.Services.AddTransient<DashboardViewModel>();
+            builder.Services.AddTransient<Dashboard>();
+            builder.UseMauiApp<App>().UseMauiCommunityToolkit();
+
 
             return builder.Build();
         }

@@ -10,6 +10,7 @@ namespace SpringOnion
 
             Routing.RegisterRoute("LoginPage", typeof(LoginPage));
             Routing.RegisterRoute("RegisterPage", typeof(RegisterPage));
+            Routing.RegisterRoute("Dashboard", typeof(Dashboard));
         }
     }
 }
